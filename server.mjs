@@ -2,6 +2,7 @@ import http from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
+import { EdgeTTS } from '@travisvn/edge-tts';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const html=await readFile(path.join(root,'public/index.html'));
 const visits=new Map();
@@ -12,6 +13,21 @@ const url=new URL(req.url||'/', 'http://localhost');
 if(req.method==='GET'&&url.pathname==='/'){res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-cache','x-content-type-options':'nosniff'});res.end(html);return}
 if(req.method==='GET'&&['/manifest.webmanifest','/icon.svg'].includes(url.pathname)){try{const file=await readFile(path.join(root,'public',url.pathname.slice(1)));res.writeHead(200,{'content-type':url.pathname.endsWith('svg')?'image/svg+xml':'application/manifest+json','cache-control':'public, max-age=3600','x-content-type-options':'nosniff'});res.end(file);return}catch{return out(res,404,{error:'Файл не найден'})}}
 if(req.method==='GET'&&url.pathname==='/health')return out(res,200,{ok:true});
+if(url.pathname==='/api/tts'){
+if(req.method!=='POST')return out(res,405,{error:'Не поддерживается'});
+try{
+let raw='';for await(const p of req){raw+=p;if(raw.length>5000)return out(res,413,{error:'Слишком длинный текст'})}
+const data=JSON.parse(raw);
+const content=typeof data.text==='string'?data.text.replace(/[\*#`_]/g,'').trim().slice(0,900):'';
+if(!content)return out(res,400,{error:'Нет текста'});
+const tts=new EdgeTTS(content,'ru-RU-DmitryNeural',{rate:'-8%',pitch:'-6Hz',volume:'+0%'});
+const result=await Promise.race([tts.synthesize(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('TTS timeout')),15000))]);
+const bytes=Buffer.from(await result.audio.arrayBuffer());
+if(bytes.length<500)throw Error('Empty speech audio');
+res.writeHead(200,{'content-type':'audio/mpeg','content-length':String(bytes.length),'cache-control':'no-store','x-content-type-options':'nosniff'});
+res.end(bytes);return;
+}catch(e){return out(res,502,{error:'Мужская нейроозвучка временно недоступна'})}
+}
 if(url.pathname!=='/api/chat')return out(res,404,{error:'Не найдено'});
 if(req.method==='GET')return out(res,200,{ready:!!process.env.GROQ_API_KEY,model:process.env.GROQ_MODEL||'openai/gpt-oss-120b'});
 if(req.method!=='POST')return out(res,405,{error:'Не поддерживается'});
