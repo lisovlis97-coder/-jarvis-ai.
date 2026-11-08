@@ -1,6 +1,6 @@
 {
   "name": "jarvis-iphone-render",
-  "version": "4.0.1",
+  "version": "8.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,5 +8,8 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "@travisvn/edge-tts": "^1.0.0"
   }
 }
