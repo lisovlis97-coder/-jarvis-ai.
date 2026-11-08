@@ -13,6 +13,20 @@ const url=new URL(req.url||'/', 'http://localhost');
 if(req.method==='GET'&&url.pathname==='/'){res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-cache','x-content-type-options':'nosniff'});res.end(html);return}
 if(req.method==='GET'&&['/manifest.webmanifest','/icon.svg'].includes(url.pathname)){try{const file=await readFile(path.join(root,'public',url.pathname.slice(1)));res.writeHead(200,{'content-type':url.pathname.endsWith('svg')?'image/svg+xml':'application/manifest+json','cache-control':'public, max-age=3600','x-content-type-options':'nosniff'});res.end(file);return}catch{return out(res,404,{error:'Файл не найден'})}}
 if(req.method==='GET'&&url.pathname==='/health')return out(res,200,{ok:true});
+if(req.method==='GET'&&url.pathname==='/voice-lab'){
+try{const page=await readFile(path.join(root,'public/voice-lab.html'));res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store'});res.end(page)}catch{return out(res,404,{error:'Voice lab unavailable'})}return;
+}
+if(req.method==='GET'&&url.pathname==='/voice-sample.mp3'){
+try{
+const phrase='Добрый вечер, сэр. Джарвис на связи. Я готов к выполнению ваших распоряжений.';
+const tts=new EdgeTTS(phrase,'ru-RU-DmitryNeural',{rate:'-8%',pitch:'-6Hz',volume:'+0%'});
+const result=await Promise.race([tts.synthesize(),new Promise((_,reject)=>setTimeout(()=>reject(new Error('TTS timeout')),15000))]);
+const bytes=Buffer.from(await result.audio.arrayBuffer());
+if(bytes.length<500)throw Error('No audio');
+res.writeHead(200,{'content-type':'audio/mpeg','content-length':String(bytes.length),'cache-control':'no-store','accept-ranges':'none','x-content-type-options':'nosniff'});
+res.end(bytes);
+}catch(e){console.error('voice-lab synthesis failed:',e?.message||e);return out(res,502,{error:'Сервер мужского голоса недоступен'})}return;
+}
 if(url.pathname==='/api/tts'){
 if(req.method!=='POST')return out(res,405,{error:'Не поддерживается'});
 try{
