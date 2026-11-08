@@ -10,6 +10,7 @@ function out(res,code,obj){res.writeHead(code,{'content-type':'application/json;
 http.createServer(async(req,res)=>{
 const url=new URL(req.url||'/', 'http://localhost');
 if(req.method==='GET'&&url.pathname==='/'){res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-cache','x-content-type-options':'nosniff'});res.end(html);return}
+if(req.method==='GET'&&['/manifest.webmanifest','/icon.svg'].includes(url.pathname)){try{const file=await readFile(path.join(root,'public',url.pathname.slice(1)));res.writeHead(200,{'content-type':url.pathname.endsWith('svg')?'image/svg+xml':'application/manifest+json','cache-control':'public, max-age=3600','x-content-type-options':'nosniff'});res.end(file);return}catch{return out(res,404,{error:'Файл не найден'})}}
 if(req.method==='GET'&&url.pathname==='/health')return out(res,200,{ok:true});
 if(url.pathname!=='/api/chat')return out(res,404,{error:'Не найдено'});
 if(req.method==='GET')return out(res,200,{ready:!!process.env.GROQ_API_KEY,model:process.env.GROQ_MODEL||'openai/gpt-oss-120b'});
