@@ -9,7 +9,7 @@ on:
       - '.github/workflows/build-windows.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -50,3 +50,22 @@ jobs:
           path: source/desktop/dist/*.exe
           retention-days: 30
           if-no-files-found: error
+      - name: Publish desktop update to GitHub Releases
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $version = node -p "require('./package.json').version"
+          $tag = "desktop-v$version"
+          $files = @(Get-ChildItem -Path dist -Filter '*.exe' | ForEach-Object { $_.FullName })
+          $files += @(Get-ChildItem -Path dist -Filter 'latest*.yml' | ForEach-Object { $_.FullName })
+          $files += @(Get-ChildItem -Path dist -Filter '*.blockmap' | ForEach-Object { $_.FullName })
+          if (-not ($files | Where-Object { $_ -like '*latest*yml' })) { throw "Missing update metadata latest.yml" }
+          gh release view $tag 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag $files --clobber
+          } else {
+            gh release create $tag $files --target main --title "J.A.R.V.I.S. Desktop $version" --notes "Windows installer and application auto-update files. Install JARVIS-Setup once; future versions download inside the app."
+          }
