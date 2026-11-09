@@ -55,7 +55,7 @@ const notice=document.createElement('div');notice.id='desktopNotice';notice.text
 document.querySelector('#answer')?.after(notice);
 const mic=document.getElementById('mic'),stop=document.getElementById('stop');
 if(!mic)return;
-let recorder=null,stream=null,parts=[],timer=null,recording=false,starting=false;
+let recorder=null,stream=null,parts=[],timer=null,recording=false,starting=false,recognitionMs=0;
 function cleanup(){
 clearTimeout(timer);
 if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
@@ -77,14 +77,16 @@ recorder.onstop=async ()=>{
 const blob=new Blob(parts,{type:recorder?.mimeType?.split(';')[0]||'audio/webm'});
 cleanup();
 notice.textContent='Распознаю речь…';
+const recognitionStart=performance.now();
 mic.disabled=true;
 try{
 const response=await fetch('/api/transcribe',{method:'POST',headers:{'content-type':blob.type},body:blob});
 const data=await response.json();
 if(!response.ok)throw Error(data.error||'Сервис распознавания не ответил');
+recognitionMs=Math.round(performance.now()-recognitionStart);
 const phrase=(data.text||'').trim();
 if(!phrase){notice.textContent='Не удалось разобрать слова. Повтори команду.';return;}
-notice.textContent='Распознано: '+phrase;
+notice.textContent='Распознано за '+(recognitionMs/1000).toFixed(1)+' с: '+phrase;
 const input=document.getElementById('input');
 input.value=phrase;document.getElementById('send').click();
 }catch(e){notice.textContent='Ошибка: '+e.message}
