@@ -42,4 +42,70 @@ taskForm.addEventListener('submit',e=>{e.preventDefault();if(addTask(taskInput.v
 function commandMatch(value){const s=String(value||'').trim().replace(/^джарвис[\s,.:!—-]*/i,'').toLowerCase();if(/^(?:открой|запусти|включи)\s+(?:мне\s+)?калькулятор/.test(s))return {kind:'launch',key:'calculator'};if(/^(?:открой|запусти)\s+(?:мне\s+)?блокнот/.test(s))return {kind:'launch',key:'notepad'};if(/^(?:открой|запусти)\s+(?:мне\s+)?проводник/.test(s))return {kind:'launch',key:'explorer'};const task=s.match(/^(?:добавь|запиши|создай)\s+(?:мне\s+)?(?:задачу|в задачи)\s*[:—-]?\s*(.+)/);if(task)return {kind:'task',text:task[1]};if(/^(?:покажи|открой)\s+(?:мои\s+)?задачи/.test(s))return {kind:'showTasks'};if(/^(?:проверь|проверить)\s+обновлен/.test(s))return {kind:'update'};return null}
 async function intercept(e){const input=$('input');if(!input)return;const cmd=commandMatch(input.value);if(!cmd)return;e.preventDefault();e.stopImmediatePropagation();input.value='';if(cmd.kind==='launch')await runAction(cmd.key);if(cmd.kind==='task'){addTask(cmd.text);statusMessage('Задача сохранена на этом компьютере.')}if(cmd.kind==='showTasks')statusMessage('Задач: '+tasks.length+'. Они отображаются слева.');if(cmd.kind==='update'){api?.checkUpdates?.();statusMessage('Проверяю обновления…')}}
 $('send')?.addEventListener('click',intercept,true);$('input')?.addEventListener('keydown',e=>{if(e.key==='Enter')intercept(e)},true);
+
+/* Desktop cockpit: no document-level vertical scrolling. Individual history/tasks can scroll internally. */
+const cockpitCSS=String.raw`
+.jarvis-hud-v2,.jarvis-hud-v2 body{width:100%;height:100%;max-height:100%;overflow:hidden!important}
+.jarvis-hud-v2 main{height:calc(100dvh - 0px);max-height:100dvh;overflow:hidden!important;display:flex;flex-direction:column;padding:7px 13px 10px!important}
+.jarvis-hud-v2 main>.top{flex:0 0 30px;padding:0 8px 6px!important}
+.jarvis-hud-v2 main>.brand{flex:0 0 auto;font-size:22px!important;margin:3px 0 0!important;line-height:1.18;letter-spacing:9px}
+.jarvis-hud-v2 main>.subtitle{flex:0 0 auto;font-size:9px;margin:0!important;line-height:1.35}
+.jarvis-hud-v2 main>#desktopVoiceReport{display:none!important}
+#jarvisFrame{min-height:0!important;height:auto!important;flex:1 1 auto;margin:6px 0 0!important;gap:10px!important;grid-template-columns:minmax(180px,230px) minmax(370px,1fr) minmax(210px,280px)!important}
+.jarvis-panel{min-height:0!important;max-height:100%;overflow:hidden}
+.jarvis-panel-title{padding:9px 12px!important;font-size:10px!important;flex:0 0 auto}
+#jarvisCenter{padding:0 12px 9px!important;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+#jarvisCenter .corewrap{height:clamp(155px,28vh,250px)!important;min-height:0!important;flex:0 1 auto;overflow:hidden!important}
+#jarvisCenter .core{width:clamp(142px,20vh,185px)!important;height:clamp(142px,20vh,185px)!important}
+#jarvisCenter .core:before{width:75%!important;height:75%!important}
+#jarvisCenter .core:after{width:54%!important;height:54%!important}
+#jarvisCenter .corewrap:before{width:clamp(167px,23vh,210px)!important;height:clamp(167px,23vh,210px)!important}
+#jarvisCenter .corewrap:after{width:clamp(181px,25vh,226px)!important;height:clamp(181px,25vh,226px)!important}
+#jarvisCenter .hudhud{top:calc(50% - 25px)!important;font-size:9px!important}
+#jarvisCenter .status{font-size:11px!important;line-height:1.2;margin:2px 0!important;flex:0 0 auto}
+#jarvisCenter .soundBars{height:21px!important;margin:0 auto 3px!important;flex:0 0 auto}
+#jarvisCenter .answer{min-height:48px!important;max-height:125px;overflow:auto;font-size:13px!important;line-height:1.42;padding:8px 10px!important;margin:0 0 5px!important;flex:1 1 auto}
+#jarvisCenter #desktopNotice{font-size:10px!important;line-height:1.25;margin:0 0 3px!important;min-height:15px!important}
+#jarvisCenter .controls{margin:4px 0!important;flex:0 0 auto}
+#jarvisCenter .controls .btn{font-size:12px!important;padding:10px 8px!important;white-space:nowrap}
+#jarvisCenter .sendline{margin:4px 0!important;flex:0 0 auto}
+#jarvisCenter .sendline input{padding:10px!important;font-size:13px!important}
+#jarvisCenter .sendline .btn{padding:8px 12px!important}
+#jarvisQuickPrompts{padding:2px 0!important;flex:0 0 auto}
+#jarvisQuickPrompts button{padding:4px 8px!important;font-size:9px!important}
+#jarvisCenter .jarvis-panel-footer{font-size:9px;padding:5px!important;flex:0 0 auto}
+#jarvisLeft .jarvis-info-row{padding:7px 10px!important;font-size:11px!important}
+#jarvisLeft .jarvis-section{padding:8px 10px!important}
+#jarvisLeft .jarvis-shortcut{padding:7px 9px!important;margin-bottom:5px!important;font-size:11px!important}
+#jarvisLeft .jarvis-panel-footer{padding:7px;font-size:9px}
+#jarvisTaskItems{max-height:clamp(70px,18vh,175px);overflow:auto}
+#jarvisRight{min-height:0;max-height:none!important;overflow:hidden!important;display:flex!important;flex-direction:column}
+#jarvisRight .voiceCard{margin:5px 8px!important;padding:7px!important}
+#jarvisRight .voiceHeader{font-size:9px!important}
+#jarvisRight .voiceNote{display:none}
+#jarvisRight .voiceRow{gap:5px}
+#jarvisRight .voiceRow label{font-size:10px}
+#jarvisRight .voiceRow select{min-width:0!important;font-size:10px;padding:4px!important}
+#jarvisRight .voiceRow .btn{padding:6px;font-size:10px}
+#jarvisRight .settings{margin:5px 8px!important;font-size:10px}
+#jarvisRight .settings .btn{padding:6px!important;font-size:10px}
+#jarvisRight .memoryPanel{margin:5px 8px!important;padding:8px!important;max-height:clamp(100px,25vh,210px);overflow:auto}
+#jarvisRight .memoryHelp{font-size:9px!important}
+#jarvisRight #log{flex:1 1 0;min-height:42px;max-height:none!important;margin:5px 8px!important;padding:7px;overflow:auto}
+#jarvisRight footer{display:none}
+@media(max-width:1050px){
+#jarvisFrame{grid-template-columns:minmax(155px,190px) minmax(310px,1fr) minmax(185px,220px)!important;gap:7px!important}
+#jarvisRight .voiceCard .voiceRow{max-height:100px;overflow:auto}
+}
+@media(max-width:760px){
+.jarvis-hud-v2,.jarvis-hud-v2 body{overflow:auto!important;height:auto;max-height:none}
+.jarvis-hud-v2 main{height:auto;max-height:none;overflow:visible!important}
+#jarvisFrame{display:flex!important;flex-direction:column;height:auto!important;min-height:0}
+.jarvis-panel{max-height:none}
+#jarvisCenter{min-height:420px}
+#jarvisRight{min-height:260px;max-height:500px!important}
+}
+`;
+const cockpitStyle=document.createElement('style');cockpitStyle.id='jarvis-cockpit-fit';cockpitStyle.textContent=cockpitCSS;document.head.append(cockpitStyle);
+
 })();
