@@ -223,7 +223,12 @@ function createWindow(){
      const hud=fs.readFileSync(path.join(__dirname,'hud-v2.js'),'utf8');
      return win.webContents.executeJavaScript(hud).then(()=>{
        const operations=fs.readFileSync(path.join(__dirname,'operations.js'),'utf8');
-       return win.webContents.executeJavaScript(operations);
+       return win.webContents.executeJavaScript(operations).then(async()=>{
+       const visuals=fs.readFileSync(path.join(__dirname,'mark-ix.css'),'utf8');
+       await win.webContents.insertCSS(visuals);
+       const mark=fs.readFileSync(path.join(__dirname,'mark-ix.js'),'utf8');
+       return win.webContents.executeJavaScript(mark);
+     });
      });
    }).catch(err=>console.warn('Desktop UI:',err.message));
  }});
