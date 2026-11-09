@@ -25,6 +25,8 @@ const indicator=(label,value)=>{
 };
 const voiceSignal=indicator('VOICE LINK','STANDBY');
 const aiSignal=indicator('NEURAL LINK','ONLINE');
+const cpuSignal=indicator('PROCESSOR LOAD','--%');
+const batterySignal=indicator('POWER SOURCE','—');
 const clockSignal=indicator('LOCAL CLOCK','--:--');
 const meterLabel=make('div','arc-meter-label','MEMORY UTILIZATION');
 const meter=make('div','arc-meter'),fill=make('i');meter.append(fill);
@@ -34,7 +36,7 @@ const api=window.jarvisDesktop;
 async function status(){
  try{
   const s=await api?.status?.();
-  if(s&&Number.isFinite(s.ramUsedPct))fill.style.width=Math.min(100,Math.max(1,s.ramUsedPct))+'%';
+  if(s){if(Number.isFinite(s.ramUsedPct))fill.style.width=Math.min(100,Math.max(1,s.ramUsedPct))+'%';if(Number.isFinite(s.cpuUsedPct))cpuSignal.textContent=s.cpuUsedPct+'%';batterySignal.textContent=s.onBattery?'BATTERY':'AC POWER';}
  }catch{}
 }
 status();setInterval(status,60000);
