@@ -191,7 +191,10 @@ function createWindow(){
    const script=fs.readFileSync(path.join(__dirname,'desktop-ui.js'),'utf8');
    win.webContents.executeJavaScript(script).then(()=>{
      const hud=fs.readFileSync(path.join(__dirname,'hud-v2.js'),'utf8');
-     return win.webContents.executeJavaScript(hud);
+     return win.webContents.executeJavaScript(hud).then(()=>{
+       const operations=fs.readFileSync(path.join(__dirname,'operations.js'),'utf8');
+       return win.webContents.executeJavaScript(operations);
+     });
    }).catch(err=>console.warn('Desktop UI:',err.message));
  }});
  win.webContents.setWindowOpenHandler(({url})=>{if(url.startsWith('https://')||url.startsWith('http://'))shell.openExternal(url).catch(()=>{});return {action:'deny'}});
