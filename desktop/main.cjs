@@ -3,11 +3,11 @@ const {app,BrowserWindow,Menu,shell,dialog,session} = require('electron');
 const path=require('node:path');
 const fs=require('node:fs');
 const {autoUpdater}=require('electron-updater');
-let checkingUpdate=false, updateTimer=null;
+let checkingUpdate=false, updateTimer=null, manualUpdateCheck=false;
 function checkUpdates(manual=false){
  if(!app.isPackaged || process.env.PORTABLE_EXECUTABLE_FILE){if(manual)dialog.showMessageBox({type:'info',message:'Автообновления доступны в установленной версии J.A.R.V.I.S., а не в Portable.'});return;}
  if(checkingUpdate)return;
- checkingUpdate=true;
+ checkingUpdate=true;manualUpdateCheck=manual;
  autoUpdater.checkForUpdates().catch(e=>{checkingUpdate=false;if(manual)dialog.showMessageBox(win,{type:'warning',message:'Не удалось проверить обновления',detail:String(e.message||e).slice(0,300)})});
 }
 function setupUpdates(){
@@ -15,9 +15,9 @@ function setupUpdates(){
  autoUpdater.autoDownload=true;
  autoUpdater.autoInstallOnAppQuit=false;
  autoUpdater.on('checking-for-update',()=>{checkingUpdate=true});
- autoUpdater.on('update-not-available',()=>{checkingUpdate=false});
- autoUpdater.on('update-available',()=>{checkingUpdate=false});
- autoUpdater.on('error',e=>{checkingUpdate=false;console.warn('Update check:',e?.message)});
+ autoUpdater.on('update-not-available',()=>{checkingUpdate=false;if(manualUpdateCheck){manualUpdateCheck=false;dialog.showMessageBox(win,{type:'info',message:'Обновлений пока нет',detail:'Установлена актуальная опубликованная версия J.A.R.V.I.S.'}).catch(()=>{})}});
+ autoUpdater.on('update-available',()=>{checkingUpdate=false;manualUpdateCheck=false});
+ autoUpdater.on('error',e=>{checkingUpdate=false;manualUpdateCheck=false;console.warn('Update check:',e?.message)});
  autoUpdater.on('update-downloaded',info=>{
   dialog.showMessageBox(win,{type:'info',buttons:['Перезапустить и обновить','Позже'],defaultId:0,cancelId:1,
    title:'Обновление Джарвиса',message:'Доступна новая версия J.A.R.V.I.S. '+info.version,
