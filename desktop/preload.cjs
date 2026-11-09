@@ -1,3 +1,7 @@
 'use strict';
-// Local Windows APIs are deliberately not exposed to remote web content.
-// A later version will add explicit, confirmable actions through a dedicated secure UI.
+const {contextBridge,ipcRenderer}=require('electron');
+contextBridge.exposeInMainWorld('jarvisWindowsVoice',{
+ speak:text=>ipcRenderer.invoke('jarvis:tts-speak',String(text||'').slice(0,1000)),
+ stop:()=>ipcRenderer.invoke('jarvis:tts-stop'),
+ voices:()=>ipcRenderer.invoke('jarvis:tts-voices')
+});
