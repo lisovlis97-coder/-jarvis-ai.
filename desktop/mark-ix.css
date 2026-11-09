@@ -1,0 +1,77 @@
+
+:root{--arc:#66efff;--arc-muted:#80adc0;--arc-edge:#25627c}
+html.mark-ix,html.mark-ix body{width:100%;height:100%;overflow:hidden!important;background:#020a12!important}
+html.mark-ix body{background:radial-gradient(ellipse at 50% 37%,#0e3546,#03141f 44%,#01070d 82%)!important}
+html.mark-ix body:before{opacity:.13!important;background-size:39px 39px!important}
+.mark-ix main{height:100dvh!important;max-height:100dvh!important;max-width:none!important;padding:9px 12px 9px!important;display:flex!important;flex-direction:column;overflow:hidden!important}
+.mark-ix main>.top{height:34px;flex:0 0 34px!important;padding:0 10px!important;border:1px solid #1a5870;border-radius:7px;background:linear-gradient(90deg,#0c2d40c9,#06182795)!important}
+.mark-ix main>.top span:first-child{font:10px Consolas,monospace;letter-spacing:2px!important;color:#9ae9ff}
+.mark-ix main>.top .chip{font:10px Consolas,monospace;padding:5px 10px!important;color:#80ffd1}
+.mark-ix main>.brand{position:absolute;left:50%;top:46px;transform:translateX(-50%);z-index:2;font-weight:200;font-size:22px!important;line-height:25px;letter-spacing:11px!important;margin:0!important;color:#d9faff;text-shadow:0 0 19px #38dbff99;white-space:nowrap}
+.mark-ix main>.subtitle{position:absolute;left:50%;top:74px;transform:translateX(-50%);z-index:2;font:9px Consolas,monospace!important;letter-spacing:2.4px!important;color:#81bbd2;white-space:nowrap}
+.mark-ix #jarvisFrame{flex:1 1 auto!important;height:auto!important;min-height:0!important;margin:51px 0 0!important;gap:9px!important;grid-template-columns:minmax(210px,23%) minmax(365px,1fr) minmax(230px,25%)!important}
+.mark-ix .jarvis-panel{border:1px solid #1d576c!important;border-radius:9px!important;background:linear-gradient(145deg,#072031e8,#030f1df0)!important;min-width:0;min-height:0;overflow:hidden!important;box-shadow:inset 0 1px 0 #52ddff25,0 0 20px #00d9ff0b!important}
+.mark-ix .jarvis-panel:before{content:'';position:absolute;top:0;left:0;width:32px;height:2px;background:#53efff;box-shadow:0 0 13px #15cfff;z-index:2}
+.mark-ix .jarvis-panel-title{height:34px;flex:0 0 34px!important;line-height:17px!important;padding:8px 11px!important;font:10px Consolas,monospace!important;letter-spacing:1.7px;color:#9cefff!important;background:linear-gradient(90deg,#0e344891,transparent)!important;border-color:#23576a!important}
+.mark-ix #jarvisLeft{display:flex!important;flex-direction:column!important}
+.mark-ix .jarvis-info-row{padding:7px 11px!important;border-color:#194452!important;font:11px Consolas,monospace!important}
+.mark-ix .jarvis-info-row span{font-size:9px!important;color:#78a4b5}
+.mark-ix .jarvis-info-row strong{color:#b5faff}
+.mark-ix .jarvis-section{padding:8px 10px 5px!important;border-color:#1e485a!important}
+.mark-ix .jarvis-section-heading{font:9px Consolas,monospace!important;letter-spacing:1px;color:#87c9da;margin-bottom:6px}
+.mark-ix .jarvis-shortcut{padding:7px 10px!important;margin-bottom:5px!important;border-color:#286c81!important;background:linear-gradient(100deg,#0c3850,#071f32)!important;font:11px Segoe UI,sans-serif!important;color:#b9f1ff;min-height:29px}
+.mark-ix .jarvis-shortcut:hover{border-color:#83ebff!important;background:#0e5067!important}
+.mark-ix #jarvisTaskItems{max-height:min(16vh,118px)!important;overflow:auto}
+.mark-ix #jarvisLeft .jarvis-panel-footer{display:none}
+.mark-ix #jarvisCenter{display:flex!important;flex-direction:column!important;padding:0 11px 8px!important;background:radial-gradient(circle at 50% 28%,#0e5d644c,#04121cb0 65%)!important}
+.mark-ix #stage{position:relative;isolation:isolate;flex:1 1 auto!important;width:100%;height:clamp(185px,36vh,310px)!important;min-height:155px!important;max-height:39vh!important;margin:0!important;overflow:hidden!important;display:grid;place-items:center}
+.mark-ix #stage .core{position:relative;z-index:4;width:clamp(145px,25vh,220px)!important;height:clamp(145px,25vh,220px)!important;border:2px solid #77f7ff!important;background:radial-gradient(circle,#75faff25 0 9%,#021a24 11% 20%,#11617d99 21% 30%,#041a28 42%,#12627d88 52%,#020e18 61%),repeating-conic-gradient(#28e2f02a 0 2deg,transparent 3deg 14deg)!important;box-shadow:inset 0 0 42px #22e6ff88,0 0 38px #1cddff66,0 0 90px #00deff20!important;animation:arc-rotate 22s linear infinite!important}
+.mark-ix #stage .core:before{width:80%!important;height:80%!important;border:2px dashed #77f4ffcc!important;animation:arc-rotate 8s linear infinite reverse!important}
+.mark-ix #stage .core:after{width:53%!important;height:53%!important;border:1px solid #c4ffff!important;box-shadow:0 0 21px #66f5ff,inset 0 0 33px #16bee0!important}
+.mark-ix #stage .center{font:700 11px Consolas,monospace!important;letter-spacing:1px!important;animation:arc-rotate 22s linear infinite reverse!important;color:#e1ffff!important}
+.mark-ix #stage:before{width:clamp(170px,30vh,262px)!important;height:clamp(170px,30vh,262px)!important;border:1px solid #61efffb5!important;box-shadow:0 0 17px #1ce9ff55;animation:arc-rotate 19s linear infinite!important}
+.mark-ix #stage:after{width:clamp(195px,34vh,290px)!important;height:clamp(195px,34vh,290px)!important;border:2px dotted #5dceff85!important;animation:arc-rotate 27s linear infinite reverse!important}
+@keyframes arc-rotate{to{transform:rotate(360deg)}}
+.mark-ix .arc-orbit{position:absolute;z-index:2;left:50%;top:50%;width:clamp(215px,39vh,330px);height:clamp(215px,39vh,330px);border-radius:50%;background:repeating-conic-gradient(#5defff 0 1.3deg,transparent 1.5deg 10deg);mask:radial-gradient(circle,transparent 58%,#000 58.5% 59.4%,transparent 60%);animation:arc-orbit 34s linear infinite;opacity:.8;pointer-events:none}
+@keyframes arc-orbit{from{transform:translate(-50%,-50%) rotate(0)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+.mark-ix .arc-reticle{position:absolute;inset:0;pointer-events:none;z-index:1;background:linear-gradient(90deg,transparent calc(50% - .5px),#48ddff22 50%,transparent calc(50% + .5px)),linear-gradient(transparent calc(50% - .5px),#48ddff22 50%,transparent calc(50% + .5px))}
+.mark-ix .arc-caption{position:absolute;top:10px;left:50%;transform:translateX(-50%);font:9px Consolas,monospace;letter-spacing:1.8px;color:#78bfd3;white-space:nowrap}
+.mark-ix #stage .hudhud{top:auto!important;bottom:15px!important;font-size:9px!important;gap:4px!important}
+.mark-ix #stage .hudhud strong{font-size:10px!important}
+.mark-ix #stage .hudleft{left:9px!important}.mark-ix #stage .hudright{right:9px!important}
+.mark-ix #jarvisCenter .status{font:700 11px Consolas,monospace!important;letter-spacing:2px!important;margin:0!important;min-height:14px}
+.mark-ix #jarvisCenter .soundBars{height:23px!important;flex:0 0 23px!important;margin:0 auto 3px!important;opacity:.7}
+.mark-ix #jarvisCenter .answer{background:linear-gradient(120deg,#092b3c,#061b29)!important;border:1px solid #3294aa!important;border-radius:8px!important;flex:1 1 auto!important;min-height:52px!important;max-height:120px!important;overflow:auto!important;margin:2px 0 4px!important;padding:10px 12px!important;text-align:left!important;font-size:13px!important;line-height:1.5!important}
+.mark-ix #jarvisCenter #desktopNotice{font:10px Consolas,monospace!important;min-height:13px!important;margin:0 0 4px!important}
+.mark-ix #jarvisCenter .controls{gap:6px!important;margin:3px 0!important;flex:0 0 auto!important}
+.mark-ix #jarvisCenter .controls .btn{padding:9px 8px!important;min-height:35px;font:11px Segoe UI,sans-serif!important;border-radius:7px!important}
+.mark-ix #jarvisCenter .controls .primary{flex:1!important;font-weight:700!important;letter-spacing:1.2px;background:linear-gradient(100deg,#126f8a,#0a435f)!important}
+.mark-ix #jarvisCenter .sendline{margin:3px 0!important;gap:6px!important}
+.mark-ix #jarvisCenter .sendline input{padding:9px 12px!important;font-size:13px!important;border-radius:7px!important}
+.mark-ix #jarvisCenter .sendline .btn{padding:8px 13px!important;border-radius:7px!important}
+.mark-ix #jarvisQuickPrompts{display:none!important}
+.mark-ix #jarvisCenter .jarvis-panel-footer{display:none}
+.mark-ix #jarvisRight{display:flex!important;flex-direction:column!important;overflow:hidden!important;max-height:none!important}
+.mark-ix #jarvisRight .voiceCard{margin:7px!important;padding:7px!important}
+.mark-ix #jarvisRight .memoryPanel{margin:5px 7px!important;max-height:clamp(90px,22vh,180px)!important;overflow:auto!important}
+.mark-ix #jarvisRight #log{flex:1 1 auto!important;min-height:55px!important;max-height:none!important;margin:5px 7px!important;overflow:auto!important}
+.mark-ix #jarvisRight .settings{margin:5px 7px!important;font-size:10px}
+.mark-ix #jarvisRight .voiceRow select{font-size:10px!important;padding:4px!important}
+.mark-ix #jarvisRight footer{display:none}
+.mark-ix #jarvisOpsQuick{flex:0 0 auto!important;margin:2px 0 5px!important}
+.mark-ix #jarvisOpsQuick button{padding:5px 8px!important;font:10px Consolas,monospace!important}
+.mark-ix #jarvisNotesHolder{max-height:clamp(39px,16vh,135px);overflow:auto}
+.arc-signal{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 11px;border-bottom:1px solid #174457;color:#8bcddd;font:10px Consolas,monospace}
+.arc-signal b{color:#c5faff;font-weight:500}
+.arc-meter-label{margin:8px 11px 3px;color:#80bad0;font:9px Consolas,monospace;letter-spacing:1px}
+.arc-meter{margin:0 11px 7px;height:3px;background:#0a374a;border-radius:3px;overflow:hidden}
+.arc-meter i{display:block;width:35%;height:100%;background:linear-gradient(90deg,#0c83a7,#69faff);box-shadow:0 0 8px #37e8ff;transition:width .5s}
+.arc-footer{padding:4px;text-align:center;color:#518ba0;font:9px Consolas,monospace;letter-spacing:1px;flex:0 0 auto}
+.arc-settings-toggle{margin:6px 7px 0;width:calc(100% - 14px);padding:8px;border:1px solid #287b98;border-radius:7px;background:#0b354a;color:#a5eafb;font:10px Consolas,monospace;text-align:left;cursor:pointer}
+.mark-ix .listening .core{animation-duration:6s!important;box-shadow:0 0 70px #30e6ff,inset 0 0 65px #30e6ff!important}
+.mark-ix .speaking .core{animation-duration:7s!important;box-shadow:0 0 75px #30e6ff,inset 0 0 50px #30e6ff!important}
+.mark-ix .thinking .core{border-color:#d3b4ff!important;box-shadow:0 0 70px #b15bff!important}
+@media(max-height:710px){.mark-ix #stage{max-height:32vh!important}.mark-ix #jarvisFrame{margin-top:45px!important}.mark-ix #jarvisCenter .answer{min-height:45px!important}.mark-ix #jarvisCenter .controls .btn{padding:7px!important}.mark-ix #jarvisCenter .sendline input{padding:7px!important}}
+@media(max-width:1080px){.mark-ix #jarvisFrame{grid-template-columns:minmax(180px,21%) minmax(320px,1fr) minmax(190px,23%)!important;gap:7px!important}.mark-ix #stage .hudleft{left:3px!important}.mark-ix #stage .hudright{right:3px!important}}
+@media(max-width:820px){.mark-ix #jarvisFrame{grid-template-columns:165px minmax(270px,1fr) 180px!important;gap:5px!important}.mark-ix main>.brand{font-size:18px!important;top:42px}.mark-ix main>.subtitle{display:none}.mark-ix #jarvisFrame{margin-top:36px!important}}
+@media(prefers-reduced-motion:reduce){.mark-ix .core,.mark-ix .core:before,.mark-ix .center,.mark-ix .arc-orbit{animation:none!important}}
