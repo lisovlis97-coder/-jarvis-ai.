@@ -43,6 +43,10 @@ jobs:
           node --check main.cjs
           node --check preload.cjs
           node --check desktop-ui.js
+          node --check hud-v2.js
+          node --check operations.js
+          node --check mark-ix.js
+          if (-not (Test-Path 'mark-ix.css')) { throw 'MARK IX stylesheet missing' }
       - name: Build Windows executable and installer
         run: npm run dist
         env:
