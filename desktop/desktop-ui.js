@@ -56,7 +56,38 @@ document.querySelector('#answer')?.after(notice);
 const mic=document.getElementById('mic'),stop=document.getElementById('stop');
 if(!mic)return;
 let recorder=null,stream=null,parts=[],timer=null,recording=false,starting=false,recognitionMs=0;
+let audioContext=null,analyser=null,microphoneSource=null,visualFrame=null;
+function stopAudioVisualizer(){
+ if(visualFrame!==null){cancelAnimationFrame(visualFrame);visualFrame=null}
+ try{microphoneSource?.disconnect()}catch{}microphoneSource=null;
+ try{analyser?.disconnect()}catch{}analyser=null;
+ if(audioContext){audioContext.close().catch(()=>{});audioContext=null}
+ const bars=[...document.querySelectorAll('#bars i')];for(const bar of bars){bar.style.height='7px';bar.style.opacity='.55'}
+}
+function startAudioVisualizer(currentStream){
+ try{
+  const CTX=window.AudioContext||window.webkitAudioContext;if(!CTX)return;
+  audioContext=new CTX();microphoneSource=audioContext.createMediaStreamSource(currentStream);
+  analyser=audioContext.createAnalyser();analyser.fftSize=512;analyser.smoothingTimeConstant=.7;
+  microphoneSource.connect(analyser);
+  const samples=new Uint8Array(analyser.frequencyBinCount),bars=[...document.querySelectorAll('#bars i')];
+  function draw(){
+   if(!analyser||!recording)return;
+   analyser.getByteFrequencyData(samples);
+   bars.forEach((bar,i)=>{
+    const pos=Math.min(samples.length-1,Math.floor((i/bars.length)*samples.length*.65));
+    const intensity=samples[pos]/255;
+    bar.style.height=(5+Math.round(31*intensity))+'px';
+    bar.style.opacity=String(.45+intensity*.55);
+   });
+   visualFrame=requestAnimationFrame(draw)
+  }
+  visualFrame=requestAnimationFrame(draw);
+ }catch(e){console.warn('Voice visualizer unavailable',e.message)}
+}
+
 function cleanup(){
+stopAudioVisualizer();
 clearTimeout(timer);
 if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
 recorder=null;recording=false;starting=false;mic.classList.remove('recording');mic.textContent='🎙 ГОВОРИТЬ';
@@ -93,6 +124,7 @@ input.value=phrase;document.getElementById('send').click();
 finally{mic.disabled=false}
 };
 recorder.start();recording=true;starting=false;mic.disabled=false;
+startAudioVisualizer(stream);
 mic.classList.add('recording');mic.textContent='■ ЗАВЕРШИТЬ ЗАПИСЬ';
 notice.textContent='СЛУШАЮ · Говори обычным голосом. Затем нажми кнопку ещё раз.';
 timer=setTimeout(()=>{if(recorder?.state==='recording')recorder.stop()},20000);
