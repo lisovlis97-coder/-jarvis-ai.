@@ -1,10 +1,13 @@
 'use strict';
 const {app,BrowserWindow,Menu,shell,dialog,session} = require('electron');
 const path=require('node:path');
+const fs=require('node:fs');
 const HOME='https://jarvis-ai-assistant-aziv.onrender.com/';
 const ORIGIN=new URL(HOME).origin;
 let win;
 app.setAppUserModelId('ru.vector.jarvis');
+// Desktop is permitted to play generated speech after an asynchronous network response.
+app.commandLine.appendSwitch('autoplay-policy','no-user-gesture-required');
 const hasAllowedUrl=url=>{try{const u=new URL(url);return u.origin===ORIGIN && (u.protocol==='https:')}catch{return false}};
 function createWindow(){
  win=new BrowserWindow({
@@ -18,6 +21,10 @@ function createWindow(){
   }
  });
  win.once('ready-to-show',()=>win.show());
+ win.webContents.on('did-finish-load',()=>{if(hasAllowedUrl(win.webContents.getURL()) && new URL(win.webContents.getURL()).pathname==='/'){
+   const script=fs.readFileSync(path.join(__dirname,'desktop-ui.js'),'utf8');
+   win.webContents.executeJavaScript(script).catch(err=>console.warn('Desktop UI:',err.message));
+ }});
  win.webContents.setWindowOpenHandler(({url})=>{if(url.startsWith('https://')||url.startsWith('http://'))shell.openExternal(url).catch(()=>{});return {action:'deny'}});
  win.webContents.on('will-navigate',(e,url)=>{if(!hasAllowedUrl(url)){e.preventDefault();if(/^https?:/.test(url))shell.openExternal(url).catch(()=>{})}});
  win.webContents.on('did-fail-load',(_e,code,_desc,url,isMainFrame)=>{if(isMainFrame&&code!==-3&&url.startsWith(ORIGIN))win.loadFile(path.join(__dirname,'offline.html'))});
