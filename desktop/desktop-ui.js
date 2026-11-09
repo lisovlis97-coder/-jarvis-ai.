@@ -4,6 +4,7 @@ if(window.__jarvisDesktopReady) return;
 window.__jarvisDesktopReady=true;
 document.title='J.A.R.V.I.S. | DESKTOP COMMAND CENTER';
 document.documentElement.classList.add('jarvis-desktop');
+const hudVersion=document.querySelector('.hudright strong');if(hudVersion)hudVersion.textContent='DESKTOP 1.3';
 const css=`
 :root{color-scheme:dark}
 body{background:radial-gradient(ellipse 70% 70% at 50% 35%,#103c57 0%,#051929 48%,#010813 96%);background-attachment:fixed;color:#bdeeff}
