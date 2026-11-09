@@ -139,6 +139,37 @@ ipcMain.handle('jarvis:launch-app',async(event,action)=>{
   }catch(e){resolve({ok:false,error:String(e.message).slice(0,100)})}
  });
 });
+
+const safePlaces=Object.freeze({
+ downloads:{label:'Загрузки',location:()=>path.join(os.homedir(),'Downloads')},
+ documents:{label:'Документы',location:()=>app.getPath('documents')},
+ desktop:{label:'Рабочий стол',location:()=>app.getPath('desktop')}
+});
+const safeSites=Object.freeze({
+ vector:{label:'Вектор РФ',url:'https://vector-rf.ru/'},
+ github:{label:'Наш GitHub J.A.R.V.I.S.',url:'https://github.com/lisovlis97-coder/jarvis-ai'},
+ jarvis:{label:'Джарвис в браузере',url:HOME}
+});
+ipcMain.handle('jarvis:open-place',async(event,key)=>{
+ if(!isTrustedSender(event))throw new Error('Unauthorized');
+ if(typeof key!=='string'||!Object.hasOwn(safePlaces,key))throw new Error('Недоступная папка');
+ const place=safePlaces[key];
+ const confirm=await dialog.showMessageBox(win,{type:'question',buttons:['Открыть','Отмена'],defaultId:1,cancelId:1,
+ title:'J.A.R.V.I.S. / Windows',message:'Открыть папку «'+place.label+'»?'});
+ if(confirm.response!==0)return {ok:false,cancelled:true};
+ const result=await shell.openPath(place.location());
+ return result?{ok:false,error:result.slice(0,140)}:{ok:true,label:place.label};
+});
+ipcMain.handle('jarvis:open-site',async(event,key)=>{
+ if(!isTrustedSender(event))throw new Error('Unauthorized');
+ if(typeof key!=='string'||!Object.hasOwn(safeSites,key))throw new Error('Недоступный сайт');
+ const site=safeSites[key];
+ const confirm=await dialog.showMessageBox(win,{type:'question',buttons:['Открыть','Отмена'],defaultId:1,cancelId:1,
+ title:'J.A.R.V.I.S. / Browser',message:'Открыть «'+site.label+'» во внешнем браузере?',detail:site.url});
+ if(confirm.response!==0)return {ok:false,cancelled:true};
+ await shell.openExternal(site.url);
+ return {ok:true,label:site.label};
+});
 ipcMain.handle('jarvis:check-update',async event=>{
  if(!isTrustedSender(event))throw new Error('Unauthorized');
  checkUpdates(true);return {ok:true};
