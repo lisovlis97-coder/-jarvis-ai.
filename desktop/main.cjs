@@ -188,6 +188,8 @@ ipcMain.handle('jarvis:open-selected-file',async event=>{
   filters:[{name:'Документы',extensions:['pdf','docx','doc','xlsx','xls','pptx','ppt','txt','csv','png','jpg','jpeg']},{name:'Все файлы',extensions:['*']}]});
  if(result.canceled||!result.filePaths.length)return {ok:false,cancelled:true};
  const filepath=result.filePaths[0],name=path.basename(filepath);
+ const allowedExtensions=new Set(['.pdf','.docx','.doc','.xlsx','.xls','.pptx','.ppt','.txt','.csv','.png','.jpg','.jpeg']);
+ if(!allowedExtensions.has(path.extname(filepath).toLowerCase()))return {ok:false,error:'Этот тип файла пока не поддерживается Джарвисом.'};
  const confirm=await dialog.showMessageBox(win,{type:'question',buttons:['Открыть','Отмена'],defaultId:1,cancelId:1,
   title:'Подтвердить действие',message:'Открыть выбранный документ?',detail:name});
  if(confirm.response!==0)return {ok:false,cancelled:true};
