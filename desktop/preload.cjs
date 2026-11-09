@@ -11,5 +11,7 @@ contextBridge.exposeInMainWorld('jarvisDesktop',{
  launch:action=>ipcRenderer.invoke('jarvis:launch-app',action),
  checkUpdates:()=>ipcRenderer.invoke('jarvis:check-update'),
  openPlace:key=>ipcRenderer.invoke('jarvis:open-place',key),
- openSite:key=>ipcRenderer.invoke('jarvis:open-site',key)
+ openSite:key=>ipcRenderer.invoke('jarvis:open-site',key),
+ openFile:()=>ipcRenderer.invoke('jarvis:open-selected-file'),
+ windowAction:action=>ipcRenderer.invoke('jarvis:window-action',action)
 });
