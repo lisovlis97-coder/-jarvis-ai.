@@ -2,6 +2,7 @@
 const {app,BrowserWindow,Menu,shell,dialog,session} = require('electron');
 const path=require('node:path');
 const fs=require('node:fs');
+const os=require('node:os');
 const {spawn}=require('node:child_process');
 const {ipcMain}=require('electron');
 const {autoUpdater}=require('electron-updater');
@@ -108,6 +109,39 @@ ipcMain.handle('jarvis:tts-speak',async(event,phrase)=>{
 ipcMain.handle('jarvis:tts-stop',event=>{
  if(!isTrustedSender(event))return false;
  stopWindowsSpeech();return true;
+});
+
+
+const allowedDesktopActions=Object.freeze({
+ calculator:{label:'Калькулятор',exe:'calc.exe'},
+ notepad:{label:'Блокнот',exe:'notepad.exe'},
+ explorer:{label:'Проводник Windows',exe:'explorer.exe'}
+});
+ipcMain.handle('jarvis:system-status',event=>{
+ if(!isTrustedSender(event))throw new Error('Unauthorized');
+ const total=os.totalmem(),free=os.freemem();
+ return {platform:'Windows',hostname:os.hostname().slice(0,60),cpus:os.cpus().length,
+  ramTotalGb:Math.round(total/107374182.4)/10,ramUsedPct:Math.round(100*(total-free)/total),
+  uptimeMinutes:Math.floor(os.uptime()/60),version:app.getVersion()};
+});
+ipcMain.handle('jarvis:launch-app',async(event,action)=>{
+ if(!isTrustedSender(event))throw new Error('Unauthorized');
+ if(typeof action!=='string'||!Object.hasOwn(allowedDesktopActions,action))throw new Error('Unsupported action');
+ const entry=allowedDesktopActions[action];
+ const result=await dialog.showMessageBox(win,{type:'question',buttons:['Запустить','Отмена'],defaultId:1,cancelId:1,
+  title:'Разрешение J.A.R.V.I.S.',message:'Разрешить запуск приложения?',detail:entry.label});
+ if(result.response!==0)return {ok:false,cancelled:true};
+ return new Promise(resolve=>{
+  try{
+   const child=spawn(entry.exe,[],{detached:true,windowsHide:false,stdio:'ignore'});
+   child.once('error',e=>resolve({ok:false,error:'Не получилось открыть '+entry.label+': '+e.message.slice(0,100)}));
+   child.once('spawn',()=>{child.unref();resolve({ok:true,label:entry.label})});
+  }catch(e){resolve({ok:false,error:String(e.message).slice(0,100)})}
+ });
+});
+ipcMain.handle('jarvis:check-update',async event=>{
+ if(!isTrustedSender(event))throw new Error('Unauthorized');
+ checkUpdates(true);return {ok:true};
 });
 
 function createWindow(){
