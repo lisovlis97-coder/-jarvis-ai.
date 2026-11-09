@@ -158,7 +158,10 @@ function createWindow(){
  win.once('ready-to-show',()=>win.show());
  win.webContents.on('did-finish-load',()=>{if(hasAllowedUrl(win.webContents.getURL()) && new URL(win.webContents.getURL()).pathname==='/'){
    const script=fs.readFileSync(path.join(__dirname,'desktop-ui.js'),'utf8');
-   win.webContents.executeJavaScript(script).catch(err=>console.warn('Desktop UI:',err.message));
+   win.webContents.executeJavaScript(script).then(()=>{
+     const hud=fs.readFileSync(path.join(__dirname,'hud-v2.js'),'utf8');
+     return win.webContents.executeJavaScript(hud);
+   }).catch(err=>console.warn('Desktop UI:',err.message));
  }});
  win.webContents.setWindowOpenHandler(({url})=>{if(url.startsWith('https://')||url.startsWith('http://'))shell.openExternal(url).catch(()=>{});return {action:'deny'}});
  win.webContents.on('will-navigate',(e,url)=>{if(!hasAllowedUrl(url)){e.preventDefault();if(/^https?:/.test(url))shell.openExternal(url).catch(()=>{})}});
