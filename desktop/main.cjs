@@ -2,6 +2,8 @@
 const {app,BrowserWindow,Menu,shell,dialog,session} = require('electron');
 const path=require('node:path');
 const fs=require('node:fs');
+const {spawn}=require('node:child_process');
+const {ipcMain}=require('electron');
 const {autoUpdater}=require('electron-updater');
 let checkingUpdate=false, updateTimer=null, manualUpdateCheck=false;
 function checkUpdates(manual=false){
@@ -34,6 +36,55 @@ app.setAppUserModelId('ru.vector.jarvis');
 // Desktop is permitted to play generated speech after an asynchronous network response.
 app.commandLine.appendSwitch('autoplay-policy','no-user-gesture-required');
 const hasAllowedUrl=url=>{try{const u=new URL(url);return u.origin===ORIGIN && (u.protocol==='https:')}catch{return false}};
+
+// Only exposes audio output controls: no shell execution or file operations from remote web content.
+let currentVoiceProcess=null;
+function isTrustedSender(event){
+ try{return event.sender===win?.webContents && new URL(event.senderFrame.url).origin===ORIGIN}catch{return false}
+}
+function runWindowsSpeech(script,timeoutMs=30000){
+ return new Promise((resolve,reject)=>{
+  const proc=spawn('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-EncodedCommand',Buffer.from(script,'utf16le').toString('base64')],{windowsHide:true,timeout:timeoutMs});
+  currentVoiceProcess=proc;
+  let stdout='',stderr='';
+  proc.stdout?.on('data',b=>{stdout+=b.toString('utf8').slice(0,5000)});
+  proc.stderr?.on('data',b=>{stderr+=b.toString('utf8').slice(0,1000)});
+  proc.once('error',reject);
+  proc.once('close',(code,signal)=>{if(currentVoiceProcess===proc)currentVoiceProcess=null;if(code===0)resolve(stdout.trim());else reject(new Error(stderr.trim()||'Windows voice engine is unavailable'))});
+ });
+}
+function stopWindowsSpeech(){
+ if(currentVoiceProcess){try{currentVoiceProcess.kill()}catch{}currentVoiceProcess=null}
+}
+const voiceInit=`Add-Type -AssemblyName System.Speech -ErrorAction Stop
+$s=New-Object System.Speech.Synthesis.SpeechSynthesizer
+$v=@($s.GetInstalledVoices() | Where-Object { $_.Enabled } | ForEach-Object { $_.VoiceInfo })
+$ru=@($v | Where-Object { $_.Culture.Name -like 'ru*' })
+$preferred=@($ru | Where-Object { $_.Gender.ToString() -eq 'Male' })
+if ($preferred.Count -gt 0) { $s.SelectVoice($preferred[0].Name) }
+elseif ($ru.Count -gt 0) { $s.SelectVoice($ru[0].Name) }
+elseif ($v.Count -gt 0) { $s.SelectVoice($v[0].Name) }
+else { throw 'На компьютере не установлены голоса Windows Speech.' }
+`;
+ipcMain.handle('jarvis:tts-voices',async event=>{
+ if(!isTrustedSender(event))throw new Error('Unauthorized');
+ const script=voiceInit+`$v | ForEach-Object { $_.Name + ' | ' + $_.Culture.Name + ' | ' + $_.Gender.ToString() }`;
+ try{return await runWindowsSpeech(script,10000)}catch(e){return 'Голос Windows недоступен: '+e.message}
+});
+ipcMain.handle('jarvis:tts-speak',async(event,phrase)=>{
+ if(!isTrustedSender(event))throw new Error('Unauthorized');
+ const text=typeof phrase==='string'?phrase.trim().slice(0,1000):'';
+ if(!text)throw new Error('Пустой текст');
+ stopWindowsSpeech();
+ const safe=Buffer.from(text,'utf8').toString('base64');
+ const script=voiceInit+`$text=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${safe}')); $s.Rate=-1; $s.Speak($text); $s.Dispose()`;
+ return await runWindowsSpeech(script,35000);
+});
+ipcMain.handle('jarvis:tts-stop',event=>{
+ if(!isTrustedSender(event))return false;
+ stopWindowsSpeech();return true;
+});
+
 function createWindow(){
  win=new BrowserWindow({
   width:1180,height:850,minWidth:480,minHeight:590,
@@ -75,4 +126,4 @@ app.whenReady().then(()=>{
  setupUpdates();
  app.on('activate',()=>{if(BrowserWindow.getAllWindows().length===0)createWindow()});
 });
-app.on('window-all-closed',()=>{if(process.platform!=='darwin')app.quit()});
+app.on('window-all-closed',()=>{stopWindowsSpeech();if(process.platform!=='darwin')app.quit()});
