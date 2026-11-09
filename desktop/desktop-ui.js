@@ -100,35 +100,47 @@ mic.addEventListener('click',e=>{e.stopImmediatePropagation();e.preventDefault()
 stop.addEventListener('click',()=>{if(recording && recorder?.state==='recording')recorder.stop()},true);
 const originalSpeak=window.speechSynthesis?.speak?.bind(window.speechSynthesis);
 if(originalSpeak){
- let activeAudio=null;
- async function windowsFallback(utterance){
-   if(vapi?.speak){
-     try{
-       notice.textContent='Проверяю локальный голос Windows…';
-       utterance.onstart?.();
-       await vapi.speak(utterance.text);
-       utterance.onend?.();
-       notice.textContent='Готов к следующей команде.';
-       return;
-     }catch(e){notice.textContent='Локальный голос недоступен: '+e.message.slice(0,130);}
-   }
-   try{originalSpeak(utterance)}catch(e){notice.textContent='Ошибка озвучки. Установи русский голос в настройках Windows.'}
- }
- window.speechSynthesis.speak=function(utterance){
-  const text=utterance?.text||'';
-  if(!text)return;
-  if(activeAudio){activeAudio.pause();activeAudio=null}
-  notice.textContent='Пробую мужскую нейроозвучку…';
-  fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:text.slice(0,900)})})
-   .then(response=>{if(!response.ok)throw Error('TTS недоступен');return response.blob()})
-   .then(async blob=>{
-    const url=URL.createObjectURL(blob),audio=new Audio(url);activeAudio=audio;
-    audio.addEventListener('playing',()=>{utterance.onstart?.();notice.textContent='ВОСПРОИЗВОЖУ МУЖСКОЙ ГОЛОС'});
-    audio.addEventListener('ended',()=>{URL.revokeObjectURL(url);if(activeAudio===audio)activeAudio=null;utterance.onend?.();notice.textContent='Готов к следующей команде.'});
-    audio.addEventListener('error',()=>{URL.revokeObjectURL(url);if(activeAudio===audio)activeAudio=null;windowsFallback(utterance)});
-    try{await audio.play()}catch(e){URL.revokeObjectURL(url);windowsFallback(utterance)}
-   }).catch(()=>windowsFallback(utterance));
+ let activeAudio=null,neuralAvailable=true,voiceGeneration=0;
+ const fastVoice=async utterance=>{
+   const generation=++voiceGeneration;
+   const text=(utterance?.text||'').slice(0,900);
+   if(!text)return;
+   if(activeAudio){activeAudio.pause();activeAudio=null}
+   const started=performance.now();
+   let startedSpeaking=false;
+   const begin=()=>{if(!startedSpeaking){startedSpeaking=true;utterance.onstart?.()}};
+   const finish=()=>{utterance.onend?.();notice.textContent='Готов к следующей команде.'};
+   const localFallback=async()=>{
+     if(generation!==voiceGeneration)return;
+     notice.textContent='Локальная озвучка Windows…';
+     if(vapi?.speak){
+       try{begin();await vapi.speak(text);if(generation===voiceGeneration){notice.textContent='Голос Windows · '+Math.round(performance.now()-started)+' мс до завершения';finish()}return}
+       catch(e){notice.textContent='Голос Windows недоступен: '+String(e.message||e).slice(0,100)}
+     }
+     if(generation===voiceGeneration){try{originalSpeak(utterance)}catch(e){notice.textContent='Ошибка озвучки: '+String(e.message||e).slice(0,90)}}
+   };
+   if(!neuralAvailable){await localFallback();return}
+   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),2500);
+   notice.textContent='Подготавливаю голос…';
+   try{
+     const response=await fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text}),signal:controller.signal});
+     if(!response.ok)throw Error('Сервис голоса '+response.status);
+     const blob=await response.blob();
+     if(blob.size<500)throw Error('Пустой звуковой файл');
+     if(generation!==voiceGeneration)return;
+     const url=URL.createObjectURL(blob),audio=new Audio(url);activeAudio=audio;
+     const release=()=>{URL.revokeObjectURL(url);if(activeAudio===audio)activeAudio=null};
+     audio.addEventListener('playing',()=>{begin();notice.textContent='Мужской голос · ответ через '+Math.round(performance.now()-started)+' мс'});
+     audio.addEventListener('ended',()=>{release();if(generation===voiceGeneration)finish()});
+     audio.addEventListener('error',()=>{release();neuralAvailable=false;localFallback()});
+     try{await audio.play()}catch(e){release();neuralAvailable=false;await localFallback()}
+   }catch(e){
+     neuralAvailable=false;
+     notice.textContent='Нейросинтез недоступен — переключился на быстрый голос Windows.';
+     await localFallback();
+   }finally{clearTimeout(timeout)}
  };
+ window.speechSynthesis.speak=utterance=>{fastVoice(utterance).catch(e=>{notice.textContent='Ошибка голоса: '+String(e.message||e).slice(0,110)})};
 }
 window.scrollTo({top:0,behavior:'instant'});
 })();
