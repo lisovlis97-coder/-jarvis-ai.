@@ -16,10 +16,13 @@ jobs:
     timeout-minutes: 30
     defaults:
       run:
-        working-directory: desktop
+        working-directory: source/desktop
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          path: source
+          persist-credentials: false
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -38,6 +41,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: jarvis-windows-exe
-          path: desktop/dist/*.exe
+          path: source/desktop/dist/*.exe
           retention-days: 30
           if-no-files-found: error
