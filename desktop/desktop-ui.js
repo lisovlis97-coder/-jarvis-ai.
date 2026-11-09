@@ -11,14 +11,14 @@ body:before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.24;ba
 main{position:relative;max-width:1160px;padding:22px 35px 55px}
 .top{border-bottom:1px solid #1c5569;padding-bottom:15px;font-size:11px;letter-spacing:3px}
 .top span:first-child{color:#9beeff}
-.brand{font-weight:200;letter-spacing:14px;font-size:44px;margin:18px auto 3px}
+.brand{font-weight:200;letter-spacing:14px;font-size:38px;margin:10px auto 2px}
 .subtitle{font-size:11px;letter-spacing:5px;color:#69b9d7}
-.corewrap{height:370px;max-width:870px;margin:5px auto 0;overflow:visible}
-.core{width:267px;height:267px;border:2px solid #49dcff;box-shadow:0 0 42px #28c6ff55,inset 0 0 55px #1eaef950;background:repeating-conic-gradient(from 0deg,#1dd4ff48 0deg 1deg,transparent 2deg 13deg),radial-gradient(circle,#23c6ff3b,#001d30 72%)}
-.core:before{width:221px;height:221px;border-width:2px}.core:after{width:145px;height:145px;box-shadow:0 0 28px #16cfff,inset 0 0 30px #3dfbff}
-.corewrap:before{width:318px;height:318px;border-color:#4bd5ff90}.corewrap:after{width:345px;height:345px;border-color:#5deaff77}
+.corewrap{height:305px;max-width:870px;margin:3px auto 0;overflow:hidden}
+.core{width:220px;height:220px;border:2px solid #49dcff;box-shadow:0 0 42px #28c6ff55,inset 0 0 55px #1eaef950;background:repeating-conic-gradient(from 0deg,#1dd4ff48 0deg 1deg,transparent 2deg 13deg),radial-gradient(circle,#23c6ff3b,#001d30 72%)}
+ .core:before{width:180px;height:180px;border-width:2px}.core:after{width:130px;height:130px;box-shadow:0 0 28px #16cfff,inset 0 0 30px #3dfbff}
+.corewrap:before{width:265px;height:265px;border-color:#4bd5ff90}.corewrap:after{width:290px;height:290px;border-color:#5deaff77}
 .center{font-size:15px;letter-spacing:3px;text-shadow:0 0 16px #b5fbff}
-.hudhud{top:140px;font-size:12px;letter-spacing:2px;gap:10px;color:#5dabc8}
+.hudhud{top:115px;font-size:12px;letter-spacing:2px;gap:10px;color:#5dabc8}
 .hudhud strong{font-size:13px;color:#b0f6ff}.hudleft{left:32px}.hudright{right:32px}
 .status{font-size:13px;font-weight:500;letter-spacing:4px;margin-bottom:10px}
 .answer{max-width:870px;margin:0 auto;min-height:75px;border-color:#35a7ce;background:linear-gradient(120deg,#0b3147a8,#041421d6);font-size:16px;padding:16px 26px}
@@ -34,8 +34,8 @@ input#input{background:#041928e6;border-color:#287a98}
 #desktopHead{display:flex;justify-content:center;gap:24px;margin:2px auto 0;max-width:870px;font:11px monospace;letter-spacing:2px;color:#75b9d4}
 #desktopHead span{padding:6px 14px;border-inline:1px solid #36758f}
 #desktopNotice{max-width:870px;text-align:center;margin:0 auto 12px;font-size:12px;color:#7ad7ee}
-#mic.recording{background:#662a31!important;border-color:#ff7793!important;box-shadow:0 0 25px #ff395d70}
-@media(max-width:850px){main{padding:16px}.corewrap{height:320px}.core{width:210px;height:210px}.core:before{width:170px;height:170px}.core:after{width:115px;height:115px}.corewrap:before{width:260px;height:260px}.corewrap:after{width:285px;height:285px}.hudleft{left:0}.hudright{right:0}.hudhud{font-size:9px}.brand{font-size:35px}}
+#desktopVoiceReport{max-width:870px;margin:8px auto;color:#82cde6;text-align:center;font:12px monospace;letter-spacing:.5px}#desktopVoiceReport.warning{color:#ffcb79}#mic.recording{background:#662a31!important;border-color:#ff7793!important;box-shadow:0 0 25px #ff395d70}
+@media(max-width:850px){main{padding:16px}.corewrap{height:280px}.core{width:200px;height:200px}.core:before{width:170px;height:170px}.core:after{width:115px;height:115px}.corewrap:before{width:260px;height:260px}.corewrap:after{width:285px;height:285px}.hudleft{left:0}.hudright{right:0}.hudhud{font-size:9px}.brand{font-size:35px}}
 `;
 const style=document.createElement('style');style.textContent=css;document.head.append(style);
 const subtitle=document.querySelector('.subtitle');
@@ -43,6 +43,13 @@ if(subtitle)subtitle.textContent='PERSONAL INTELLIGENCE • WINDOWS COMMAND CENT
 const head=document.createElement('div');head.id='desktopHead';head.innerHTML='<span>LOCAL AUDIO · WHISPER</span><span>AI CORE · GROQ</span><span>HUD · DESKTOP</span>';
 subtitle?.after(head);
 const status=document.querySelector('#status');
+const voiceReport=document.createElement('div');voiceReport.id='desktopVoiceReport';voiceReport.textContent='Проверяю голосовой движок Windows…';
+document.querySelector('#desktopHead')?.after(voiceReport);
+const vapi=window.jarvisWindowsVoice;
+if(vapi?.voices){vapi.voices().then(info=>{
+ voiceReport.textContent=info?.trim()||'Голоса Windows не обнаружены';
+ if(!/\| ru-RU \| Male/i.test(info||'')){voiceReport.classList.add('warning');voiceReport.textContent='Мужской русский голос Windows не установлен. Параметры Windows → Время и язык → Речь → Голоса. Доступные: '+(info||'нет').slice(0,210)}
+}).catch(e=>{voiceReport.classList.add('warning');voiceReport.textContent='Не удалось проверить голоса Windows: '+e.message})}
 const notice=document.createElement('div');notice.id='desktopNotice';notice.textContent='Микрофон: один раз нажми «ГОВОРИТЬ», произнеси команду и нажми «ЗАВЕРШИТЬ».';
 document.querySelector('#answer')?.after(notice);
 const mic=document.getElementById('mic'),stop=document.getElementById('stop');
@@ -92,23 +99,35 @@ mic.addEventListener('click',e=>{e.stopImmediatePropagation();e.preventDefault()
 stop.addEventListener('click',()=>{if(recording && recorder?.state==='recording')recorder.stop()},true);
 const originalSpeak=window.speechSynthesis?.speak?.bind(window.speechSynthesis);
 if(originalSpeak){
-let activeAudio=null;
-window.speechSynthesis.speak=function(utterance){
-const text=utterance?.text||'';
-if(!text)return;
-if(activeAudio){activeAudio.pause();activeAudio=null;}
-const controller=new AbortController();
-notice.textContent='Синтезирую мужской голос…';
-fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:text.slice(0,900)}),signal:controller.signal})
-.then(async response=>{if(!response.ok)throw Error('TTS недоступен');return response.blob()})
-.then(async blob=>{
-const url=URL.createObjectURL(blob);const audio=new Audio(url);activeAudio=audio;
-audio.addEventListener('playing',()=>{utterance.onstart?.();notice.textContent='ВОСПРОИЗВОЖУ МУЖСКОЙ ГОЛОС';});
-audio.addEventListener('ended',()=>{URL.revokeObjectURL(url);if(activeAudio===audio)activeAudio=null;utterance.onend?.();notice.textContent='Готов к следующей команде.'});
-audio.addEventListener('error',()=>{URL.revokeObjectURL(url);if(activeAudio===audio)activeAudio=null;originalSpeak(utterance);notice.textContent='Нейроголос недоступен, включена резервная озвучка.'});
-try{await audio.play()}catch{URL.revokeObjectURL(url);originalSpeak(utterance);notice.textContent='Нейроголос заблокирован, включена резервная озвучка.'}
-})
-.catch(()=>{originalSpeak(utterance);notice.textContent='Нейроголос недоступен, включена резервная озвучка.'});
-};
+ let activeAudio=null;
+ async function windowsFallback(utterance){
+   if(vapi?.speak){
+     try{
+       notice.textContent='Проверяю локальный голос Windows…';
+       utterance.onstart?.();
+       await vapi.speak(utterance.text);
+       utterance.onend?.();
+       notice.textContent='Готов к следующей команде.';
+       return;
+     }catch(e){notice.textContent='Локальный голос недоступен: '+e.message.slice(0,130);}
+   }
+   try{originalSpeak(utterance)}catch(e){notice.textContent='Ошибка озвучки. Установи русский голос в настройках Windows.'}
+ }
+ window.speechSynthesis.speak=function(utterance){
+  const text=utterance?.text||'';
+  if(!text)return;
+  if(activeAudio){activeAudio.pause();activeAudio=null}
+  notice.textContent='Пробую мужскую нейроозвучку…';
+  fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:text.slice(0,900)})})
+   .then(response=>{if(!response.ok)throw Error('TTS недоступен');return response.blob()})
+   .then(async blob=>{
+    const url=URL.createObjectURL(blob),audio=new Audio(url);activeAudio=audio;
+    audio.addEventListener('playing',()=>{utterance.onstart?.();notice.textContent='ВОСПРОИЗВОЖУ МУЖСКОЙ ГОЛОС'});
+    audio.addEventListener('ended',()=>{URL.revokeObjectURL(url);if(activeAudio===audio)activeAudio=null;utterance.onend?.();notice.textContent='Готов к следующей команде.'});
+    audio.addEventListener('error',()=>{URL.revokeObjectURL(url);if(activeAudio===audio)activeAudio=null;windowsFallback(utterance)});
+    try{await audio.play()}catch(e){URL.revokeObjectURL(url);windowsFallback(utterance)}
+   }).catch(()=>windowsFallback(utterance));
+ };
 }
+window.scrollTo({top:0,behavior:'instant'});
 })();
