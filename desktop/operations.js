@@ -22,6 +22,9 @@ const commands=[
 ['siteVector','Вектор РФ','Сайт компании',()=>api?.openSite?.('vector')],
 ['siteJarvis','Джарвис в браузере','Сайт',()=>api?.openSite?.('jarvis')],
 ['updates','Проверить обновления','Программа',()=>api?.checkUpdates?.()],
+['openFile','Открыть документ','Выбор файла Windows',()=>api?.openFile?.()],
+['fullScreen','Полноэкранный режим','Управление окном',()=>api?.windowAction?.('fullscreen')],
+['alwaysOnTop','Поверх других окон','Управление окном',()=>api?.windowAction?.('ontop')],
 ['notes','Мои заметки','Локально на ПК',()=>{notesPanel.classList.add('visible');notesEntry.focus()}]
 ];
 async function run(item){hide();try{const r=await item[3]();info.textContent=r?.ok?'Выполнено: '+(r.label||item[1]):r?.cancelled?'Команда отменена':r?.error?'Ошибка: '+r.error:'Команда: '+item[1]}catch(e){info.textContent='Ошибка: '+String(e.message||e).slice(0,100)}}
@@ -46,6 +49,8 @@ const s=String(value||'').trim().replace(/^джарвис[\s,.:!—-]*/i,'').toL
 if(/^(?:открой|покажи)\s+(?:папку\s+)?загрузки/.test(s))return {key:'downloads'};
 if(/^(?:открой|покажи)\s+(?:папку\s+)?документы/.test(s))return {key:'documents'};
 if(/^(?:открой|покажи)\s+рабочий стол/.test(s))return {key:'desktop'};
+if(/^(?:открой|выбери|покажи)\s+(?:мне\s+)?(?:документ|файл)/.test(s))return {key:'openFile'};
+if(/^(?:включи|открой|перейди в)\s+(?:полноэкранный|полный экран)/.test(s))return {key:'fullScreen'};
 if(/^(?:открой|покажи)\s+(?:сайт\s+)?вектор\s*рф/.test(s))return {key:'siteVector'};
 if(/^(?:покажи|открой)\s+(?:список\s+)?команд/.test(s))return {key:'palette'};
 const m=s.match(/^(?:запиши|сохрани|добавь)\s+(?:заметку|в заметки)(?:\s*[:—-]\s*|\s+)(.+)/);if(m)return {note:m[1]};
