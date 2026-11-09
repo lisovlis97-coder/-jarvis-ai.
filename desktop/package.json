@@ -48,8 +48,12 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "artifactName": "JARVIS-Setup-${version}-${arch}.${ext}"
     },
-    "artifactName": "JARVIS-${version}-${arch}-${ext}"
+    "artifactName": "JARVIS-${version}-${arch}.${ext}",
+    "portable": {
+      "artifactName": "JARVIS-Portable-${version}-${arch}.${ext}"
+    }
   }
 }
