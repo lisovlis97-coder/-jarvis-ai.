@@ -89,7 +89,7 @@ function createWindow(){
  win=new BrowserWindow({
   width:1180,height:850,minWidth:480,minHeight:590,
   backgroundColor:'#020c16',title:'J.A.R.V.I.S.',
-  autoHideMenuBar:true,show:false,
+  autoHideMenuBar:false,show:false,
   webPreferences:{
    nodeIntegration:false,contextIsolation:true,sandbox:true,
    webSecurity:true,spellcheck:true,
@@ -113,9 +113,11 @@ function createWindow(){
  {type:'separator'},{label:'Открыть в браузере',click:()=>shell.openExternal(HOME)},
  {label:'Выход',role:'quit'}]},
  {label:'Окно',submenu:[{label:'Поверх других окон',type:'checkbox',click:item=>win.setAlwaysOnTop(item.checked)},{role:'minimize'},{role:'togglefullscreen'}]},
+ {label:'Обновления',submenu:[{label:'Проверить обновления J.A.R.V.I.S.',click:()=>checkUpdates(true)},{label:'Страница выпусков GitHub',click:()=>shell.openExternal('https://github.com/lisovlis97-coder/jarvis-ai/releases')}]},
  {label:'Помощь',submenu:[{label:'О программе',click:()=>dialog.showMessageBox(win,{type:'info',title:'J.A.R.V.I.S.',message:'J.A.R.V.I.S. для Windows',detail:'Версия '+app.getVersion()+'. Работающий помощник с Groq на сервере Render. Установленная версия проверяет обновления через GitHub Releases.'})}]}
  ]);
  Menu.setApplicationMenu(menu);
+ win.setMenuBarVisibility(true);
  win.loadURL(HOME);
 }
 app.whenReady().then(()=>{
