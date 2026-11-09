@@ -38,6 +38,7 @@ jobs:
         run: |
           node --check main.cjs
           node --check preload.cjs
+          node --check desktop-ui.js
       - name: Build Windows executable and installer
         run: npm run dist
         env:
