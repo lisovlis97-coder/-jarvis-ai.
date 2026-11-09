@@ -21,7 +21,7 @@ if(stage){
 const dock=$('jarvisOpsQuick');
 if(dock){const b=dock.querySelectorAll('button');['⌘ КОМАНДЫ','⇣ ЗАГРУЗКИ','▤ ЗАМЕТКИ'].forEach((label,i)=>{if(b[i])b[i].textContent=label})}
 const indicator=(label,value)=>{
- const row=make('div','arc-signal');row.append(make('span','',label),make('b','',value));left.append(row);return row.lastElementChild;
+ const row=make('div','arc-signal');row.append(make('span','',label),make('b','',value));const target=left.querySelector('.jarvis-section');if(target)left.insertBefore(row,target);else left.append(row);return row.lastElementChild;
 };
 const voiceSignal=indicator('VOICE LINK','STANDBY');
 const aiSignal=indicator('NEURAL LINK','ONLINE');
@@ -39,7 +39,7 @@ async function status(){
   if(s){if(Number.isFinite(s.ramUsedPct))fill.style.width=Math.min(100,Math.max(1,s.ramUsedPct))+'%';if(Number.isFinite(s.cpuUsedPct))cpuSignal.textContent=s.cpuUsedPct+'%';batterySignal.textContent=s.onBattery?'BATTERY':'AC POWER';}
  }catch{}
 }
-status();setInterval(status,60000);
+status();setInterval(status,5000);
 function pulse(){
  const st=$('status')?.textContent||'';
  voiceSignal.textContent=/ГОВОР|ВОСПРОИЗВ|ОЗВУЧ/i.test(st)?'SPEAKING':/СЛУША|ЗАПИС/i.test(st)?'LISTENING':'STANDBY';
