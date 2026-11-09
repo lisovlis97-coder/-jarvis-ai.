@@ -42,6 +42,29 @@ res.writeHead(200,{'content-type':'audio/mpeg','content-length':String(bytes.len
 res.end(bytes);return;
 }catch(e){return out(res,502,{error:'Мужская нейроозвучка временно недоступна'})}
 }
+if(url.pathname==='/api/transcribe'){
+ if(req.method!=='POST')return out(res,405,{error:'Не поддерживается'});
+ if(!process.env.GROQ_API_KEY)return out(res,503,{error:'ИИ не подключён'});
+ const ip=(req.headers['x-forwarded-for']||req.socket.remoteAddress||'unknown').toString().split(',')[0];
+ const now=Date.now(),key='stt:'+ip;const b=visits.get(key)||{time:now,n:0};
+ if(now-b.time>60000){b.time=now;b.n=0}b.n++;visits.set(key,b);
+ if(b.n>8)return out(res,429,{error:'Слишком много голосовых запросов. Попробуйте через минуту.'});
+ try{
+  const mime=(req.headers['content-type']||'').split(';')[0].toLowerCase();
+  if(!['audio/webm','audio/ogg','audio/mp4','audio/wav','audio/mpeg'].includes(mime))return out(res,415,{error:'Неподдерживаемый аудиоформат'});
+  const chunks=[];let size=0;
+  for await(const part of req){size+=part.length;if(size>8000000)return out(res,413,{error:'Запись слишком длинная (максимум 8 МБ)'});chunks.push(part)}
+  if(size<120)return out(res,400,{error:'Запись пуста'});
+  const ext=mime==='audio/ogg'?'ogg':mime==='audio/mp4'?'mp4':mime==='audio/wav'?'wav':mime==='audio/mpeg'?'mp3':'webm';
+  const fd=new FormData();
+  fd.set('file',new Blob(chunks,{type:mime}),'speech.'+ext);
+  fd.set('model','whisper-large-v3-turbo');fd.set('language','ru');fd.set('response_format','json');
+  const response=await fetch('https://api.groq.com/openai/v1/audio/transcriptions',{method:'POST',headers:{authorization:'Bearer '+process.env.GROQ_API_KEY},body:fd,signal:AbortSignal.timeout(25000)});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)return out(res,502,{error:'Ошибка распознавания речи: '+String(data?.error?.message||response.status).slice(0,140)});
+  return out(res,200,{text:String(data.text||'').slice(0,2000)});
+ }catch(e){console.error('transcription:',e?.message);return out(res,502,{error:'Не удалось распознать запись'})}
+}
 if(url.pathname!=='/api/chat')return out(res,404,{error:'Не найдено'});
 if(req.method==='GET')return out(res,200,{ready:!!process.env.GROQ_API_KEY,model:process.env.GROQ_MODEL||'openai/gpt-oss-120b'});
 if(req.method!=='POST')return out(res,405,{error:'Не поддерживается'});
