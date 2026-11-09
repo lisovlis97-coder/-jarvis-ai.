@@ -54,7 +54,32 @@ jobs:
           path: source/desktop/dist/*.exe
           retention-days: 30
           if-no-files-found: error
-      - name: Publish desktop update to GitHub Releases
+      - name: Publish Windows update to GitHub Releases
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = node -p "require('./package.json').version"
+          $tag = "desktop-v$version"
+          $files = @(Get-ChildItem -Path dist -File | Where-Object {
+            $_.Extension -eq '.exe' -or $_.Name -eq 'latest.yml' -or $_.Extension -eq '.blockmap'
+          } | ForEach-Object { $_.FullName })
+          if (-not (Test-Path 'dist/latest.yml')) { throw 'Missing latest.yml: automatic updates cannot work' }
+          if (-not ($files | Where-Object { $_ -like '*JARVIS-Setup*.exe' })) { throw 'Missing NSIS installer' }
+          $list = gh release list --limit 100 --json tagName | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot query GitHub releases. Check Actions token permissions.' }
+          $exists = @($list | Where-Object { $_.tagName -eq $tag }).Count -gt 0
+          if ($exists) {
+            gh release upload $tag $files --clobber
+          } else {
+            gh release create $tag $files --target main --title "J.A.R.V.I.S. Desktop $version" --notes "Windows desktop app with in-app updates."
+          }
+          if ($LASTEXITCODE -ne 0) { throw 'GitHub release publish failed' }
+
+      - name: Verify update assets were published
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         shell: pwsh
         env:
@@ -62,14 +87,9 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           $version = node -p "require('./package.json').version"
-          $tag = "desktop-v$version"
-          $files = @(Get-ChildItem -Path dist -Filter '*.exe' | ForEach-Object { $_.FullName })
-          $files += @(Get-ChildItem -Path dist -Filter 'latest*.yml' | ForEach-Object { $_.FullName })
-          $files += @(Get-ChildItem -Path dist -Filter '*.blockmap' | ForEach-Object { $_.FullName })
-          if (-not ($files | Where-Object { $_ -like '*latest*yml' })) { throw "Missing update metadata latest.yml" }
-          gh release view $tag 2>$null
-          if ($LASTEXITCODE -eq 0) {
-            gh release upload $tag $files --clobber
-          } else {
-            gh release create $tag $files --target main --title "J.A.R.V.I.S. Desktop $version" --notes "Windows installer and application auto-update files. Install JARVIS-Setup once; future versions download inside the app."
-          }
+          $assets = gh release view "desktop-v$version" --json assets --jq '.assets[].name'
+          if ($LASTEXITCODE -ne 0) { throw 'GitHub Release unavailable after publishing' }
+          $names = @($assets)
+          Write-Host ("Release assets: " + ($names -join ', '))
+          if ('latest.yml' -notin $names) { throw 'Release missing latest.yml' }
+          if (-not ($names | Where-Object { $_ -like 'JARVIS-Setup*.exe' })) { throw 'Release missing installer' }
