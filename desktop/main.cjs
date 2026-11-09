@@ -32,6 +32,31 @@ function setupUpdates(){
 const HOME='https://jarvis-ai-assistant-aziv.onrender.com/';
 const ORIGIN=new URL(HOME).origin;
 let win;
+let reconnectTimer=null, offline=false, reconnecting=false;
+function clearReconnect(){
+ if(reconnectTimer){clearInterval(reconnectTimer);reconnectTimer=null}
+ offline=false;reconnecting=false;
+}
+async function retryConnection(){
+ if(!offline||reconnecting||!win||win.isDestroyed())return;
+ reconnecting=true;
+ try{
+  const response=await fetch(ORIGIN+'/health',{signal:AbortSignal.timeout(9000),cache:'no-store'});
+  if(response.ok&&offline){
+   offline=false;
+   if(reconnectTimer){clearInterval(reconnectTimer);reconnectTimer=null}
+   await win.loadURL(HOME);
+  }
+ }catch(e){console.warn('Waiting for JARVIS server:',e?.message||e)}
+ finally{reconnecting=false}
+}
+function showOfflinePage(){
+ if(!win||win.isDestroyed())return;
+ offline=true;
+ win.loadFile(path.join(__dirname,'offline.html')).catch(err=>console.warn('Offline page failed:',err.message));
+ if(!reconnectTimer)reconnectTimer=setInterval(()=>retryConnection(),12000);
+ setTimeout(()=>retryConnection(),2000);
+}
 app.setAppUserModelId('ru.vector.jarvis');
 // Desktop is permitted to play generated speech after an asynchronous network response.
 app.commandLine.appendSwitch('autoplay-policy','no-user-gesture-required');
@@ -103,10 +128,21 @@ function createWindow(){
  }});
  win.webContents.setWindowOpenHandler(({url})=>{if(url.startsWith('https://')||url.startsWith('http://'))shell.openExternal(url).catch(()=>{});return {action:'deny'}});
  win.webContents.on('will-navigate',(e,url)=>{if(!hasAllowedUrl(url)){e.preventDefault();if(/^https?:/.test(url))shell.openExternal(url).catch(()=>{})}});
- win.webContents.on('did-fail-load',(_e,code,_desc,url,isMainFrame)=>{if(isMainFrame&&code!==-3&&url.startsWith(ORIGIN))win.loadFile(path.join(__dirname,'offline.html'))});
+ win.webContents.on('did-fail-load',(_e,code,desc,url,isMainFrame)=>{
+  if(!isMainFrame||code===-3||!url.startsWith(ORIGIN))return;
+  console.warn('JARVIS connection failed:',code,desc);
+  showOfflinePage();
+ });
+ win.webContents.on('did-finish-load',()=>{
+  const current=win.webContents.getURL();
+  if(hasAllowedUrl(current)&&new URL(current).pathname==='/'){
+   clearReconnect();
+  }
+ });
+ win.on('closed',()=>{if(reconnectTimer)clearInterval(reconnectTimer);reconnectTimer=null});
  const menu=Menu.buildFromTemplate([
  {label:'Джарвис',submenu:[
- {label:'Открыть Джарвиса',click:()=>win.loadURL(HOME)},
+ {label:'Открыть Джарвиса',click:()=>{clearReconnect();win.loadURL(HOME).catch(()=>showOfflinePage())}},
  {label:'Обновить интерфейс',accelerator:'Ctrl+R',click:()=>win.webContents.reload()},
  {label:'Проверить обновления программы',click:()=>checkUpdates(true)},
  {label:'Голосовая лаборатория',click:()=>win.loadURL(ORIGIN+'/voice-lab')},
