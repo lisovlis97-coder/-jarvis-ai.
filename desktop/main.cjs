@@ -1,5 +1,5 @@
 'use strict';
-const {app,BrowserWindow,Menu,shell,dialog,session} = require('electron');
+const {app,BrowserWindow,Menu,shell,dialog,session,powerMonitor} = require('electron');
 const path=require('node:path');
 const fs=require('node:fs');
 const os=require('node:os');
@@ -117,11 +117,23 @@ const allowedDesktopActions=Object.freeze({
  notepad:{label:'Блокнот',exe:'notepad.exe'},
  explorer:{label:'Проводник Windows',exe:'explorer.exe'}
 });
+let previousCpu=os.cpus();
+function cpuLoad(){
+ const current=os.cpus(),before=previousCpu;previousCpu=current;
+ let idle=0,total=0;
+ for(let i=0;i<current.length;i++){
+   const a=current[i].times,b=before[i]?.times||a;
+   const keys=['user','nice','sys','idle','irq'];
+   for(const k of keys){const delta=Math.max(0,a[k]-b[k]);total+=delta;if(k==='idle')idle+=delta}
+ }
+ return total>0?Math.round(100*(total-idle)/total):0;
+}
 ipcMain.handle('jarvis:system-status',event=>{
  if(!isTrustedSender(event))throw new Error('Unauthorized');
  const total=os.totalmem(),free=os.freemem();
  return {platform:'Windows',hostname:os.hostname().slice(0,60),cpus:os.cpus().length,
   ramTotalGb:Math.round(total/107374182.4)/10,ramUsedPct:Math.round(100*(total-free)/total),
+  cpuUsedPct:cpuLoad(),onBattery:powerMonitor.isOnBatteryPower(),
   uptimeMinutes:Math.floor(os.uptime()/60),version:app.getVersion()};
 });
 ipcMain.handle('jarvis:launch-app',async(event,action)=>{
@@ -169,6 +181,24 @@ ipcMain.handle('jarvis:open-site',async(event,key)=>{
  if(confirm.response!==0)return {ok:false,cancelled:true};
  await shell.openExternal(site.url);
  return {ok:true,label:site.label};
+});
+ipcMain.handle('jarvis:open-selected-file',async event=>{
+ if(!isTrustedSender(event))throw new Error('Unauthorized');
+ const result=await dialog.showOpenDialog(win,{title:'J.A.R.V.I.S. — выбрать документ',properties:['openFile'],
+  filters:[{name:'Документы',extensions:['pdf','docx','doc','xlsx','xls','pptx','ppt','txt','csv','png','jpg','jpeg']},{name:'Все файлы',extensions:['*']}]});
+ if(result.canceled||!result.filePaths.length)return {ok:false,cancelled:true};
+ const filepath=result.filePaths[0],name=path.basename(filepath);
+ const confirm=await dialog.showMessageBox(win,{type:'question',buttons:['Открыть','Отмена'],defaultId:1,cancelId:1,
+  title:'Подтвердить действие',message:'Открыть выбранный документ?',detail:name});
+ if(confirm.response!==0)return {ok:false,cancelled:true};
+ const err=await shell.openPath(filepath);
+ return err?{ok:false,error:err.slice(0,150)}:{ok:true,label:name};
+});
+ipcMain.handle('jarvis:window-action',async(event,action)=>{
+ if(!isTrustedSender(event))throw new Error('Unauthorized');
+ if(action==='fullscreen'){win.setFullScreen(!win.isFullScreen());return {ok:true,label:win.isFullScreen()?'Полный экран':'Оконный режим'}}
+ if(action==='ontop'){win.setAlwaysOnTop(!win.isAlwaysOnTop());return {ok:true,label:win.isAlwaysOnTop()?'Поверх окон':'Обычное положение'}}
+ throw new Error('Недоступное действие');
 });
 ipcMain.handle('jarvis:check-update',async event=>{
  if(!isTrustedSender(event))throw new Error('Unauthorized');
